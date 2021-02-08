@@ -17,7 +17,6 @@
 		0FB794CC25D1402E005AE438 /* BenchmarkDataSetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FB794C825D1402E005AE438 /* BenchmarkDataSetTests.swift */; };
 		0FB794CD25D1402E005AE438 /* SolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FB794C925D1402E005AE438 /* SolverTests.swift */; };
 		0FB794CE25D1402E005AE438 /* PositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FB794CA25D1402E005AE438 /* PositionTests.swift */; };
-		0FB794CF25D1402E005AE438 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0FB794CB25D1402E005AE438 /* Info.plist */; };
 		0FFB4F0925B342290092BC48 /* Connect4.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FFB4EFF25B342290092BC48 /* Connect4.framework */; };
 		0FFB4F2F25B342BA0092BC48 /* Connect4.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FFB4EFF25B342290092BC48 /* Connect4.framework */; };
 		0FFB4F3025B342BA0092BC48 /* Connect4.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0FFB4EFF25B342290092BC48 /* Connect4.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -323,7 +322,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0FB794CF25D1402E005AE438 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
