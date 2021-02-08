@@ -26,8 +26,15 @@ public final class Solver {
     /// counter of explored nodes.
     public var nodeCount : Int = 0
 
+    /// column exploration order : center first, edge last
+    internal let columnOrder : [Int]
+
     /// public initializer
     public init() {
+        // initialize the columnOrder array : center columns first and edge columns at the end
+        columnOrder = (0..<Position.Dimension.width).map { index in
+            Position.Dimension.width / 2 + (1 - 2 * (index % 2)) * (index + 1) / 2
+        }
     }
 
     /**
@@ -71,7 +78,7 @@ public final class Solver {
         }
 
         // compute the score of all possible next move and keep the best one
-        for column in 0..<Position.Dimension.width {
+        for column in columnOrder {
             if position.canPlay(in: column) {
                 let position2 = Position(position: position)
 
