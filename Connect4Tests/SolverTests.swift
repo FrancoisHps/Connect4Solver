@@ -22,7 +22,7 @@ import Connect4
 
 class SolverTests: XCTestCase {
 
-    let moves = "2252576253462244111563365343671351441"
+    let moves = "427566236745127177115664464254"
     var position : Position? = nil
 
     override func setUpWithError() throws {
@@ -31,6 +31,11 @@ class SolverTests: XCTestCase {
 
     func testSolve() throws {
         guard let position = position else { return }
-        XCTAssertEqual(Solver().solve(position: position), -1)
+        XCTAssertEqual(Solver().solve(position: position), 2)
+    }
+
+    func testWeakSolve() throws {
+        guard let position = position else { return }
+        XCTAssertEqual(Solver().solve(position: position, weak: true), 1)
     }
 }

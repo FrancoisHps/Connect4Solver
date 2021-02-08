@@ -57,6 +57,9 @@ extension Connect4Solver {
         @Argument(help: "A sequence of the played columns.")
         var moves: String
 
+        @Flag(help: "Wether to use weak solver or not.")
+        var weak = false
+
         func run()  {
 
             guard let position = Connect4.Position(moves: moves) else {
@@ -70,7 +73,7 @@ extension Connect4Solver {
             os_signpost(.begin, log: pointsOfInterest, name: "Solver", "position %@", position.debugDescription)
 
             let begin = Date()
-            let score = solver.solve(position: position)
+            let score = solver.solve(position: position, weak: weak)
             let duration = -begin.timeIntervalSinceNow
 
             os_signpost(.end, log: pointsOfInterest, name: "Solver", "score %d, nodes %d", score, solver.nodeCount)
@@ -96,6 +99,9 @@ extension Connect4Solver {
 
         @Argument(help: "Choose a test set index between 0 and 5")
         var index: Int
+
+        @Flag(help: "Wether to use weak solver or not.")
+        var weak = false
 
         func validate() throws {
             guard (0..<6).contains(index) else {
@@ -123,10 +129,10 @@ extension Connect4Solver {
 
                 let begin = Date()
 
-                let score = solver.solve(position: position.position)
+                let score = solver.solve(position: position.position, weak: weak)
                 let duration = -begin.timeIntervalSinceNow
-                if score != position.score {
-                    os_signpost(.event, log: pointsOfInterest, name: "Solver", "Score is %d, expected is %d", score, position.score)
+                if (!weak && score != position.score ) || (weak && score != position.score.signum()){
+                    os_signpost(.event, log: pointsOfInterest, name: "Solver", "Score is %d, expected is %d", score, weak ? position.score : position.score.signum())
                 }
                 totalDuration += duration
                 totalNode += solver.nodeCount
