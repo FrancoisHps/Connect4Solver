@@ -68,7 +68,7 @@ class PositionTests: XCTestCase {
     }
 
     func testPlayInColumn() throws {
-        guard let position = position else { return }
+        guard var position = position else { return }
 
         position.play(in: 5)
         XCTAssertFalse(position.canPlay(in: 5))
@@ -79,7 +79,7 @@ class PositionTests: XCTestCase {
 
 
     func testWinningMove() throws {
-        guard let position = position else { return }
+        guard var position = position else { return }
 
         position.play(in: 5)
         position.play(in: 6)
@@ -89,7 +89,7 @@ class PositionTests: XCTestCase {
     }
 
     func testWinningVerticalMove() throws {
-        let position = Position()
+        var position = Position()
 
         position.play(in: 2)
         position.play(in: 3)

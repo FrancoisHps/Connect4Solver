@@ -78,9 +78,11 @@ public final class Solver {
         }
 
         // compute the score of all possible next move and keep the best one
-        for column in columnOrder {
+        // optimization : don't use 'for column in columnOrder' which is 20% slower on test-set 1
+        for index in 0..<Position.Dimension.width {
+            let column = columnOrder[index]
             if position.canPlay(in: column) {
-                let position2 = Position(position: position)
+                var position2 = Position(position: position)
 
                 // It's opponent turn in position2 position after current player plays x column.
                 position2.play(in: column)
