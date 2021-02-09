@@ -22,73 +22,74 @@ import Foundation
 /**
  * Transposition Table is a simple hash map with fixed storage size.
  * In case of collision we keep the last entry and overide the previous one.
- *
- * We use 56-bit keys and 8-bit non-null values
  */
 final internal class TranspositionTable {
 
-    private var table : UnsafeMutablePointer<UInt>
-    private var size : Int
+    typealias KeyType = UInt32
+    typealias ValueType = Int8
 
+    private var keys : UnsafeMutablePointer<KeyType>
+    private var values : UnsafeMutablePointer<ValueType>
+    private static var size = 1 << 23 + 9
+ 
     /**
      * Allocate and initialize to zero a mutable pointer.
      * We don't use UnsafeMutableBufferPointer because we don't need collection protocol
      * We'll store a 56 bit key in low bytes  and an 8 bit value in high byte
      * - parameter size: number of entries
      */
-    internal init(size: Int) {
-        self.size = size
-        table = UnsafeMutablePointer<UInt>.allocate(capacity: size)
-        table.initialize(repeating: .zero, count: size)
+    internal init() {
+        keys = UnsafeMutablePointer<KeyType>.allocate(capacity: Self.size)
+        keys.initialize(repeating: .zero, count: Self.size)
+        values = UnsafeMutablePointer<ValueType>.allocate(capacity: Self.size)
+        values.initialize(repeating: .zero, count: Self.size)
     }
 
     deinit {
-        table.deallocate()
+        keys.deallocate()
+        values.deallocate()
     }
 
     /**
      * Compute the index in the transition table for the given key.
      */
     private func index(for key: UInt) -> Int {
-        Int(bitPattern: key) % size
+        Int(bitPattern: key) % Self.size
     }
 
     /**
      * Store a value for a given key
-     * - parameter key: 56-bit key
-     * - parameter value: non-null 8-bit value. null (0) value are used to encode missing data.
+     * - parameter key: must be less than key_size bits.
+     * - parameter value: must be less than value_size bits. null (0) value is used to encode missing data
      */
     internal func put(key: UInt, value: Int) {
-        assert(key < (UInt(1) << 56))
-        assert(value < (1 << 8))
-        assert(value > -(1 << 8))
+        assert(value <= ValueType.max)
+        assert(value >= ValueType.min)
 
         let position = index(for: key)
-        let entryPointer = table.advanced(by: position)
 
-        entryPointer.pointee = (key + (UInt(bitPattern: value) << 56))
+        keys.advanced(by: position).pointee = KeyType(truncatingIfNeeded: key)
+        values.advanced(by: position).pointee = ValueType(truncatingIfNeeded: value)
     }
 
     /**
      * Get the value of a key
-     * - parameter key: 56-bit key
-     * - parameter value: 8-bit value associated with the key if present, 0 otherwise.
+     * - parameter key: must be less than key_size bits.
+     * - returns: value_size bits value associated with the key if present, 0 otherwise.
      */
     internal func get(key: UInt) -> Int {
-        assert(key < (UInt(1) << 56))
-
         let position = index(for: key)
-        let entry = table.advanced(by: position).pointee
 
-        guard entry & ((1 << 56) - 1) == key else { return 0 }
+        guard (keys.advanced(by: position).pointee == KeyType(truncatingIfNeeded: key)) else { return .zero }
 
-        return Int(bitPattern: (entry >> 56))
+        return Int(values.advanced(by: position).pointee)
     }
 
     /**
      * Empty the Transition Table.
      */
     internal func reset() {
-        table.assign(repeating: .zero, count: size)
+        keys.assign(repeating: .zero, count: Self.size)
+        values.assign(repeating: .zero, count: Self.size)
     }
 }

@@ -92,6 +92,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "test-set 4 --weak"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "position 427566236745127177115664464254 --weak"
             isEnabled = "NO">
          </CommandLineArgument>

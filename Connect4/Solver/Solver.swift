@@ -45,8 +45,8 @@ public final class Solver {
             Position.Dimension.width / 2 + (1 - 2 * (index % 2)) * (index + 1) / 2
         }.reversed()
 
-        //8388593 prime = 64MB of transposition table
-        transpositionTable = TranspositionTable(size: 8388593)
+        // fixed transpostion table size
+        transpositionTable = TranspositionTable()
     }
 
     /**
