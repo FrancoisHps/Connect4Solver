@@ -79,7 +79,7 @@ public final class Solver {
         if position.draw { return 0 }
 
         // lower bound of score as opponent cannot win next move
-        let min = -(Position.Dimension.area - 2 - position.numberOfMoves) / 2
+        var min = -(Position.Dimension.area - 2 - position.numberOfMoves) / 2
         if(alpha < min) {
             // there is no need to keep beta above our max possible score.
             alpha = min;
@@ -91,14 +91,7 @@ public final class Solver {
         }
 
         // upper bound of our score as we cannot win immediately
-        var max = (Position.Dimension.area - 1 - position.numberOfMoves) / 2
-
-        // check into transposition table
-        let value = transpositionTable.get(key: position.key)
-        if value != 0 {
-            max = value + Score.minScore - 1
-        }
-
+        var max = (Position.Dimension.width * Position.Dimension.height - 1 - position.numberOfMoves) / 2
         if (beta > max) {
             // there is no need to keep beta above our max possible score.
             beta = max
@@ -106,6 +99,38 @@ public final class Solver {
             // prune the exploration if the [alpha;beta] window is empty.
             if alpha >= beta {
                 return beta
+            }
+        }
+
+        // check into transposition table
+        let key  = position.key
+        let value = transpositionTable.get(key: key)
+        if value != 0 {
+            if (value > Score.maxScore - Score.minScore + 1) {
+                // we have an lower bound
+                min = value + 2 * Score.minScore - Score.maxScore - 2
+                if(alpha < min) {
+                    // there is no need to keep beta above our max possible score.
+                    alpha = min;
+
+                    if(alpha >= beta) {
+                        // prune the exploration if the [alpha;beta] window is empty.
+                        return alpha;
+                    }
+                }
+            }
+            else {
+                // we have an upper bound
+                max = value + Score.minScore - 1
+                if (beta > max) {
+                    // there is no need to keep beta above our max possible score.
+                    beta = max
+
+                    // prune the exploration if the [alpha;beta] window is empty.
+                    if alpha >= beta {
+                        return beta
+                    }
+                }
             }
         }
 
@@ -130,6 +155,9 @@ public final class Solver {
 
             // prune the exploration if we find a possible move better than what we were
             if score >= beta {
+                // save the lower bound of the position
+                transpositionTable.put(key: position.key, value: score +  Score.maxScore - 2 * Score.minScore + 2)
+
                 return score
             }
 
