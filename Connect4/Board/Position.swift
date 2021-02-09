@@ -284,6 +284,18 @@ public struct Position {
         width == 0 ? 0 : bottom(width: width - 1, height: height) | UInt(1) << ((width - 1) * (height + 1));
     }
 
+    // MARK: - Better Move Ordering
+    internal func moveScore(move: UInt) -> Int {
+        computeWinningPosition(position: currentPosition | move, mask: mask)
+            .nonzeroBitCount
+    }
+
+    internal mutating func play(move: UInt) {
+        currentPosition ^= mask
+        mask |= move
+        numberOfMoves += 1
+    }
+
     // MARK: - Static bit functions
 
     /**

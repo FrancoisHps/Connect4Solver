@@ -43,7 +43,7 @@ public final class Solver {
         // initialize the columnOrder array : center columns first and edge columns at the end
         columnOrder = (0..<Position.Dimension.width).map { index in
             Position.Dimension.width / 2 + (1 - 2 * (index % 2)) * (index + 1) / 2
-        }
+        }.reversed()
 
         //8388593 prime = 64MB of transposition table
         transpositionTable = TranspositionTable(size: 8388593)
@@ -109,29 +109,34 @@ public final class Solver {
             }
         }
 
-        // compute the score of all possible next move and keep the best one
-        // optimization : don't use 'for column in columnOrder' which is 20% slower on test-set 2
+        // sort all possible moves
+        var moves = MoveSorter(at: position.numberOfMoves)
         for index in 0..<Position.Dimension.width {
-            let column = columnOrder[index]
-            if next & Position.columnMask(for: column) != 0 {
-                var position2 = Position(position: position)
+            let move = next & Position.columnMask(for: columnOrder[index])
+            if move != 0 {
+                moves.add(move: move, score: position.moveScore(move: move))
+            }
+        }
 
-                // It's opponent turn in position2 position after current player plays x column.
-                position2.play(in: column)
+        // compute the score of all possible next move and keep the best one
+        for next in moves {
+            var position2 = Position(position: position)
 
-                // If current player plays col x, his score will be the opposite of opponent's score after playing col x
-                let score = -negamax(position: position2, alpha: -beta,beta: -alpha)
+            // It's opponent turn in position2 position after current player plays x column.
+            position2.play(move: next)
 
-                // prune the exploration if we find a possible move better than what we were
-                if score >= beta {
-                    return score
-                }
+            // If current player plays col x, his score will be the opposite of opponent's score after playing col x
+            let score = -negamax(position: position2, alpha: -beta,beta: -alpha)
 
-                // reduce the [alpha;beta] window for next exploration, as we only
-                // need to search for a position that is better than the best so far.
-                if score > alpha {
-                    alpha = score
-                }
+            // prune the exploration if we find a possible move better than what we were
+            if score >= beta {
+                return score
+            }
+
+            // reduce the [alpha;beta] window for next exploration, as we only
+            // need to search for a position that is better than the best so far.
+            if score > alpha {
+                alpha = score
             }
         }
 
