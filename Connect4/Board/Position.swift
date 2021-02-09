@@ -94,7 +94,7 @@ public struct Position {
     public var numberOfMoves : Int
 
     /// compact representation of a position on width*(height+1) bits.
-    private var key: UInt {
+    internal var key: UInt {
         currentPosition + mask
     }
 

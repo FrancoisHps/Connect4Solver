@@ -29,12 +29,24 @@ public final class Solver {
     /// column exploration order : center first, edge last
     internal let columnOrder : [Int]
 
+    /// transposition table
+    private var transpositionTable : TranspositionTable
+
+    /// define min and max score
+    struct Score {
+        static let minScore = -(Position.Dimension.area) / 2 + 3;
+        static let maxScore = (Position.Dimension.area + 1) / 2 - 3;
+    }
+
     /// public initializer
     public init() {
         // initialize the columnOrder array : center columns first and edge columns at the end
         columnOrder = (0..<Position.Dimension.width).map { index in
             Position.Dimension.width / 2 + (1 - 2 * (index % 2)) * (index + 1) / 2
         }
+
+        //8388593 prime = 64MB of transposition table
+        transpositionTable = TranspositionTable(size: 8388593)
     }
 
     /**
@@ -66,7 +78,14 @@ public final class Solver {
         }
 
         // upper bound of our score as we cannot win immediately
-        let max = (Position.Dimension.area - 1 - position.numberOfMoves) / 2
+        var max = (Position.Dimension.area - 1 - position.numberOfMoves) / 2
+
+        // check into transposition table
+        let value = transpositionTable.get(key: position.key)
+        if value != 0 {
+            max = value + Score.minScore - 1
+        }
+
         if (beta > max) {
             // there is no need to keep beta above our max possible score.
             beta = max
@@ -103,7 +122,16 @@ public final class Solver {
             }
         }
 
+        // save the upper bound of the position
+        transpositionTable.put(key: position.key, value: alpha - Score.minScore + 1)
+
         return alpha;
+    }
+
+    /// reset solver to solve another position
+    public func reset() {
+        nodeCount = 0
+        transpositionTable.reset()
     }
 
     /**
@@ -113,7 +141,6 @@ public final class Solver {
      the score taking into account the number of moves before the end of the game
      */
     public func solve(position: Position, weak: Bool = false) -> Int {
-        nodeCount = 0;
         return weak ?
             // Use a [-1;1] score window to look only for win/draw/loss
             negamax(position: position, alpha: -1, beta: 1)

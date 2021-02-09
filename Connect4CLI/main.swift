@@ -138,6 +138,8 @@ extension Connect4Solver {
                 totalNode += solver.nodeCount
 
                 os_signpost(.end, log: pointsOfInterest, name: "Solver", "nodes %d", solver.nodeCount)
+
+                solver.reset()
             }
 
             print ("duration : \(totalDuration)s, explored \(totalNode) nodes, average nodes \(Double(totalNode) / Double(testSet.count))")

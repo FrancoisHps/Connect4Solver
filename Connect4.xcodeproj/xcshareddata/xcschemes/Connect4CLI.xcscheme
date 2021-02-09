@@ -53,10 +53,14 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "test-set 0"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "test-set 1"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "test-set 2"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -70,6 +74,10 @@
          <CommandLineArgument
             argument = "test-set 1 --weak"
             isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "test-set 2 --weak"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "position 427566236745127177115664464254 --weak"

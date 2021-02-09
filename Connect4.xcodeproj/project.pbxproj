@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0F640D8025D2993400E9B0B9 /* TranspositionTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F640D7F25D2993400E9B0B9 /* TranspositionTable.swift */; };
+		0F640D8825D29CFA00E9B0B9 /* TranspositionTableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F640D8725D29CFA00E9B0B9 /* TranspositionTableTests.swift */; };
 		0F7FDE7625B43DB8008D5C4C /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = 0F7FDE7525B43DB8008D5C4C /* ArgumentParser */; };
 		0FB794B825D1400C005AE438 /* Chip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FB794B025D1400C005AE438 /* Chip.swift */; };
 		0FB794B925D1400C005AE438 /* Position.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FB794B125D1400C005AE438 /* Position.swift */; };
@@ -63,6 +65,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0F640D7F25D2993400E9B0B9 /* TranspositionTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranspositionTable.swift; sourceTree = "<group>"; };
+		0F640D8725D29CFA00E9B0B9 /* TranspositionTableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranspositionTableTests.swift; sourceTree = "<group>"; };
 		0FB7948125D13E22005AE438 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		0FB794B025D1400C005AE438 /* Chip.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Chip.swift; sourceTree = "<group>"; };
 		0FB794B125D1400C005AE438 /* Position.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Position.swift; sourceTree = "<group>"; };
@@ -134,6 +138,7 @@
 			isa = PBXGroup;
 			children = (
 				0FB794B325D1400C005AE438 /* Solver.swift */,
+				0F640D7F25D2993400E9B0B9 /* TranspositionTable.swift */,
 			);
 			path = Solver;
 			sourceTree = "<group>";
@@ -160,6 +165,7 @@
 				0FB794C825D1402E005AE438 /* BenchmarkDataSetTests.swift */,
 				0FB794C925D1402E005AE438 /* SolverTests.swift */,
 				0FB794CA25D1402E005AE438 /* PositionTests.swift */,
+				0F640D8725D29CFA00E9B0B9 /* TranspositionTableTests.swift */,
 				0FB794CB25D1402E005AE438 /* Info.plist */,
 			);
 			path = Connect4Tests;
@@ -333,6 +339,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0FB794B925D1400C005AE438 /* Position.swift in Sources */,
+				0F640D8025D2993400E9B0B9 /* TranspositionTable.swift in Sources */,
 				0FB794B825D1400C005AE438 /* Chip.swift in Sources */,
 				0FB794BC25D1400C005AE438 /* BenchmarkDataSet.swift in Sources */,
 				0FB794BA25D1400C005AE438 /* Solver.swift in Sources */,
@@ -343,6 +350,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0F640D8825D29CFA00E9B0B9 /* TranspositionTableTests.swift in Sources */,
 				0FB794CE25D1402E005AE438 /* PositionTests.swift in Sources */,
 				0FB794CD25D1402E005AE438 /* SolverTests.swift in Sources */,
 				0FB794CC25D1402E005AE438 /* BenchmarkDataSetTests.swift in Sources */,
