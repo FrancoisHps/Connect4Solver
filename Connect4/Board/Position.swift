@@ -189,6 +189,101 @@ public struct Position {
         numberOfMoves == Dimension.area
     }
 
+    // MARK: - Anticipating winning move
+
+    /**
+     * Return a bitmap of all the possible next moves the do not lose in one turn.
+     * A losing move is a move leaving the possibility for the opponent to win directly.
+     *
+     * Warning this function is intended to test position where you cannot win in one turn
+     * If you have a winning move, this function can miss it and prefer to prevent the opponent
+     * to make an alignment.
+     */
+    internal var possibleNonLoosingMoves : UInt {
+        assert(!canWinNext)
+        var possibleMask = possible
+        let opponentWin = opponentWinningPosition
+        let forcedMoves = possibleMask & opponentWin
+
+        if forcedMoves != 0 {
+            if (forcedMoves & (forcedMoves - 1)) != 0 {
+                // the opponnent has two winning moves and you cannot stop him
+                return 0
+            }
+            else {
+                // enforce to play the single forced move
+                possibleMask = forcedMoves;
+            }
+        }
+
+        // avoid to play below an opponent winning spot
+        return possibleMask & ~(opponentWin >> 1)
+    }
+
+    /// true if current player can win next move
+    internal var canWinNext : Bool {
+        winningPosition & possible != 0;
+    }
+
+    /// a bitmask of the possible winning positions for the current player
+    private var winningPosition : UInt {
+        computeWinningPosition(position: currentPosition, mask: mask)
+    }
+
+    /// a bitmask of the possible winning positions for the opponent
+    private var opponentWinningPosition : UInt {
+        computeWinningPosition(position: currentPosition ^ mask, mask: mask)
+    }
+
+    /// a bitmask of all possibles moves
+    private var possible : UInt {
+        (mask + Self.bottomMask) & Self.boardMask;
+    }
+
+    /**
+     * Identify all winning positions of a given board. Meaning all open ended 3-aligments.
+     * - parameter position: position for the current player
+     * - parameter mask: position for all players
+     * - returns: bitmask containg all open ended 3-alignements
+     */
+    private func computeWinningPosition(position: UInt, mask: UInt) -> UInt {
+        // vertical;
+        var r = (position << 1) & (position << 2) & (position << 3)
+
+        //horizontal
+        var p = (position << (Dimension.height + 1)) & (position << (2 * (Dimension.height + 1)))
+        r |= p & (position << (3 * (Dimension.height + 1)))
+        r |= p & (position >> (Dimension.height + 1))
+        p = (position >> (Dimension.height + 1)) & (position >> (2 * (Dimension.height + 1)))
+        r |= p & (position << (Dimension.height + 1))
+        r |= p & (position >> (3 * (Dimension.height + 1)))
+
+        //diagonal 1
+        p = (position << (Dimension.height)) & (position << (2 * Dimension.height))
+        r |= p & (position << (3 * Dimension.height))
+        r |= p & (position >> Dimension.height)
+        p = (position >> Dimension.height) & (position >> (2 * Dimension.height))
+        r |= p & (position << Dimension.height)
+        r |= p & (position >> (3 * Dimension.height))
+
+        //diagonal 2
+        p = (position << (Dimension.height + 2)) & (position << (2 * (Dimension.height + 2)))
+        r |= p & (position << (3 * (Dimension.height + 2)))
+        r |= p & (position >> (Dimension.height + 2))
+        p = (position >> (Dimension.height + 2)) & (position >> (2 * (Dimension.height + 2)))
+        r |= p & (position << (Dimension.height + 2))
+        r |= p & (position >> (3 * (Dimension.height + 2)))
+
+        return r & (Self.boardMask ^ mask)
+    }
+
+    static private var bottomMask = bottom(width: Dimension.width, height: Dimension.height);
+    static private var boardMask = bottomMask * ((1 << Dimension.height) - 1);
+
+    static private func bottom(width: Int, height: Int) -> UInt {
+        width == 0 ? 0 : bottom(width: width - 1, height: height) | UInt(1) << ((width - 1) * (height + 1));
+    }
+
     // MARK: - Static bit functions
 
     /**

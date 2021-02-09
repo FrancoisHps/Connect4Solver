@@ -63,17 +63,30 @@ public final class Solver {
         var alpha = alpha
         var beta = beta
         assert(alpha < beta)
+        assert(!position.canWinNext)
 
         // increment counter of explored nodes
         nodeCount += 1
 
-        // check for draw game
-        guard !position.draw else { return 0 }
+        // check for possible non loosing moves
+        let next = position.possibleNonLoosingMoves;
+        if next == 0 {
+            // if no possible non losing move, opponent wins next move
+            return -(Position.Dimension.area - position.numberOfMoves) / 2
+        }
 
-        // check if current player can win next move
-        for column in 0..<Position.Dimension.width {
-            if position.canPlay(in: column) && position.isWinnngMove(in: column) {
-                return (Position.Dimension.area + 1 - position.numberOfMoves) / 2
+        // check for draw game
+        if position.draw { return 0 }
+
+        // lower bound of score as opponent cannot win next move
+        let min = -(Position.Dimension.area - 2 - position.numberOfMoves) / 2
+        if(alpha < min) {
+            // there is no need to keep beta above our max possible score.
+            alpha = min;
+
+            if(alpha >= beta) {
+                // prune the exploration if the [alpha;beta] window is empty.
+                return alpha;
             }
         }
 
@@ -97,10 +110,10 @@ public final class Solver {
         }
 
         // compute the score of all possible next move and keep the best one
-        // optimization : don't use 'for column in columnOrder' which is 20% slower on test-set 1
+        // optimization : don't use 'for column in columnOrder' which is 20% slower on test-set 2
         for index in 0..<Position.Dimension.width {
             let column = columnOrder[index]
-            if position.canPlay(in: column) {
+            if next & Position.columnMask(for: column) != 0 {
                 var position2 = Position(position: position)
 
                 // It's opponent turn in position2 position after current player plays x column.
