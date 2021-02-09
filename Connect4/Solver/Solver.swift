@@ -139,12 +139,36 @@ public final class Solver {
      - parameter position: actual position to be solved
      - parameter weak : if true, only tells you the win/draw/loss outcome of the position, otherwise, it will tell you
      the score taking into account the number of moves before the end of the game
+
+     This function combined two different techniques :
+     - Iterative deepening : increasing iteratively the depth of search while keeping shallow search results in transposition table.
+     - Null window search : using [alpha; beta] window of minimal size (beta = alpha+1) to get faster lower or upper bound of the score.
      */
     public func solve(position: Position, weak: Bool = false) -> Int {
-        return weak ?
-            // Use a [-1;1] score window to look only for win/draw/loss
-            negamax(position: position, alpha: -1, beta: 1)
-            :
-            negamax(position: position, alpha: -Position.Dimension.area / 2, beta: Position.Dimension.area / 2);
+        var min = weak ? -1 : -(Position.Dimension.area - position.numberOfMoves)/2
+        var max = weak ?  1 :  (Position.Dimension.area + 1 - position.numberOfMoves)/2
+
+        // Iterative Deepening : iteratively narrow the min-max exploration window
+        while(min < max) {
+            var med = min + (max - min)/2
+            if (med <= 0 && min / 2 < med) {
+                med = min / 2
+            }
+            else if (med >= 0 && max / 2 > med) {
+                med = max / 2
+            }
+
+            // use a null depth window to know if the actual score is greater or smaller than med
+            let r = negamax(position: position, alpha: med, beta: med + 1);
+
+            if(r <= med) {
+                max = r;
+            }
+            else {
+                min = r
+            }
+        }
+
+        return min
     }
 }
