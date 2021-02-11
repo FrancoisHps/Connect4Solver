@@ -38,4 +38,18 @@ class SolverTests: XCTestCase {
         guard let position = position else { return }
         XCTAssertEqual(Solver().solve(position: position, weak: true), 1)
     }
+
+    func testAnalyze() throws {
+        guard let position = position else { return }
+        let scores = Solver().analyze(position: position, weak: false)
+
+        XCTAssertEqual(scores, [2, 2, 1, nil, 2, nil, 2])
+    }
+
+    func testWeakAnalyze() throws {
+        guard let position = position else { return }
+        let scores = Solver().analyze(position: position, weak: true)
+
+        XCTAssertEqual(scores, [1, 1, 1, nil, 1, nil, 1])
+    }
 }

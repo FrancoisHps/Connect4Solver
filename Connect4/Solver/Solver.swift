@@ -145,7 +145,7 @@ public final class Solver {
 
         // compute the score of all possible next move and keep the best one
         for next in moves {
-            var position2 = Position(position: position)
+            var position2 = position
 
             // It's opponent turn in position2 position after current player plays x column.
             position2.play(move: next)
@@ -216,5 +216,31 @@ public final class Solver {
         }
 
         return min
+    }
+
+    // MARK: - Analyze
+
+    /**
+     * Returns the score off all possible moves of a position as an array.
+     * Returns nil for unplayable columns
+     * - parameter position: actual position to be analyzed
+     * - parameter weak : if true, only tells you the win/draw/loss outcome of the position, otherwise, best score best move
+     */
+    public func analyze(position: Position, weak: Bool) -> [Int?] {
+        var scores = Array<Int?>(repeating: nil, count: Position.Dimension.width)
+        for column in 0..<Position.Dimension.width {
+            if position.canPlay(in: column) {
+                if position.isWinnngMove(in: column) {
+                    scores[column] = (Position.Dimension.area + 1 - position.numberOfMoves) / 2
+                }
+                else {
+                    var position2 = position
+                    position2.play(in: column)
+                    scores[column] = -solve(position: position2, weak: weak);
+                }
+            }
+        }
+
+        return scores
     }
 }

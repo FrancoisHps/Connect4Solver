@@ -112,16 +112,6 @@ public struct Position {
     }
 
     /**
-     * Create a new instance of the given board.
-     * - parameter board: The board to be copied.
-     */
-    internal init(position: Position) {
-        currentPosition = position.currentPosition
-        mask = position.mask
-        numberOfMoves = position.numberOfMoves
-    }
-
-    /**
      * Plays a sequence of successive played columns, mainly used to initilize a board.
      * - parameter moves: a string of digits corresponding to the 1-based index of the column played.
      *
