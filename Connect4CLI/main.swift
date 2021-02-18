@@ -38,7 +38,7 @@ print ("Finishing at \(Date())")
 struct Connect4Solver: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Connect4 solver.",
-        subcommands: [TestSet.self, Position.self])
+        subcommands: [TestSet.self, Position.self, Explore.self, Generate.self])
 }
 
 
@@ -67,7 +67,7 @@ extension Connect4Solver {
                 return
             }
 
-            let solver = Solver()
+            let solver = Solver(openingBook: "7x6")
 
             let pointsOfInterest = OSLog(subsystem: "game.solver.connect4", category: .pointsOfInterest)
             os_signpost(.begin, log: pointsOfInterest, name: "Solver", "position %@", position.debugDescription)
@@ -115,7 +115,7 @@ extension Connect4Solver {
 
         func solve(testSet index: Int)  {
 
-            let solver = Solver()
+            let solver = Solver(openingBook: "7x6")
             let testSet = BenchmarkDataSet(index: index)
 
             var totalDuration = 0.0
@@ -143,6 +143,37 @@ extension Connect4Solver {
             }
 
             print ("duration : \(totalDuration)s, explored \(totalNode) nodes, average nodes \(Double(totalNode) / Double(testSet.count))")
+        }
+    }
+}
+
+extension Connect4Solver {
+    struct Explore: ParsableCommand {
+        @Argument(help: "Choose a depth")
+        var depth: Int
+
+        func run() {
+            var visited = Set<UInt>()
+            let book = OpeningBook(width: 7, height: 6, depth: depth)
+            book.explore(position: Connect4.Position(), moves: "", visited: &visited, depth: depth)
+        }
+    }
+}
+
+extension Connect4Solver {
+    struct Generate: ParsableCommand {
+        @Argument(help: "Choose a depth")
+        var depth: Int
+
+        func run() {
+            let book = OpeningBook(width: 7, height: 6, depth: depth)
+            book.generate(bookSize: 24)
+            do {
+                try book.save(fileName: "7x6_depth14")
+            }
+            catch {
+
+            }
         }
     }
 }

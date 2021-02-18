@@ -20,8 +20,8 @@ To help using test set, I created a Collection class named BenchmarkDataSet, whi
 | Test\_L2_R1                     | Middle-Easy   | 1              |
 | Test\_L2_R2                     | Middle-Medium | 2              |
 | Test\_L1_R1                     | Begin-Easy    | 3              |
-| Test\_L2_R2                     | Begin-Medium  | 4              |
-| Test\_L2_R3                     | Begin-Hard    | 5              |
+| Test\_L1_R2                     | Begin-Medium  | 4              |
+| Test\_L1_R3                     | Begin-Hard    | 5              |
 
 
 Usage :
@@ -216,6 +216,14 @@ Explanations are available on [gamesolver blog](http://blog.gamesolver.org/solvi
 This ehancement is trivial to port from C into Swift.
 
 
+### Opening Book
+
+| Book | Size | max Depth | key size | value size | log size |
+|:----:|:----:|:---------:|:--------:|:----------:|:--------:|
+| 7x6.book | 7x6 | 14 | 1 | 1 | 24 |
+| 7x6.book.small | 7x6 | 16 | 2 | 1 | 21 |
+
+
 ## Targets
 
 ### Connect4 Framework & Test
@@ -248,6 +256,12 @@ To test all positions in a specific test set, enter connect4 test-set and the in
 Except for the minmax algorithm you can use weak solver using weak option
 	
 	Connect4CLI test-set 1 --weak
+		
+#### Create an opening book
+
+	Connect4CLI test-set depth
+	where depth is an integer representing the max depth
+
    
 ### Profile with Instruments
 

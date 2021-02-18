@@ -328,6 +328,56 @@ public struct Position {
     static func columnMask(for column: Int)-> UInt {
         ((UInt(1) << Dimension.height) - 1) << (column * (Dimension.height + 1))
     }
+
+    // MARK: - Symetric functions
+
+    /**
+     * Build a symetric base 3 key. Two symetric positions will have the same key.
+     *
+     * This key is a base 3 representation of the sequence of played moves column per column,
+     * from bottom to top. The 3 digits are top_of_colum(0), current_player(1), opponent(2).
+     *
+     * example: game "45" where player one played colum 4, then player two played column 5
+     * has a representation in base 3 digits : 0 0 0 1 0 2 0 0 0 or : 3*3^3 + 1*3^5
+     *
+     * The symetric key is the mimimum key of the two keys built iterating columns from left to righ or right to left.
+     *
+     * as the last digit is always 0, we omit it and a base 3 key
+     * uses N = (nbMoves + nbColums - 1) base 3 digits or N*log2(3) bits.
+     */
+    internal var key3: UInt {
+        // compute key in increasing order of columns
+        var keyForward: UInt = 0
+        for column in 0..<Position.Dimension.width {
+            partialKey3(key: &keyForward, column: column)
+        }
+
+        // compute key in decreasing order of columns
+        var keyReverse: UInt = 0
+        for column in (0..<Position.Dimension.width).reversed() {
+            partialKey3(key: &keyReverse, column: column)
+        }
+
+        // take the smallest key and divide per 3 as the last base3 digit is always 0
+        return keyForward < keyReverse ? keyForward / 3 : keyReverse / 3
+    }
+
+    /**
+     * Compute a partial base 3 key for a given column
+     * - parameter key: partial key under construction
+     * - parameter column: the column e are added to the partial key
+     */
+    private func partialKey3(key: inout UInt, column: Int) {
+//        var position = Self.bottomMask(for: column)
+        var position = UInt(1) << (column * (Position.Dimension.height + 1))
+        while (position & mask != 0) {
+            key *= 3
+            key += position & currentPosition != 0 ? 1 : 2
+            position <<= 1
+        }
+
+        key *= 3
+    }
 }
 
 // MARK: - CustomDebugStringConvertible

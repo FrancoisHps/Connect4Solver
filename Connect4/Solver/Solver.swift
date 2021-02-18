@@ -32,8 +32,11 @@ public final class Solver {
     /// transposition table
     private var transpositionTable : TranspositionTable
 
+    /// opening book if any
+    internal var book: OpeningBook?
+
     /// define min and max score
-    struct Score {
+    internal struct Score {
         static let minScore = -(Position.Dimension.area) / 2 + 3;
         static let maxScore = (Position.Dimension.area + 1) / 2 - 3;
     }
@@ -134,6 +137,13 @@ public final class Solver {
             }
         }
 
+        // look for solutions stored in opening book
+        if let openingValue = book?.get(position: position) {
+            if (openingValue != 0) {
+                return  openingValue + Score.minScore - 1
+            }
+        }
+
         // sort all possible moves
         var moves = MoveSorter(at: position.numberOfMoves)
         for index in 0..<Position.Dimension.width {
@@ -191,6 +201,12 @@ public final class Solver {
      - Null window search : using [alpha; beta] window of minimal size (beta = alpha+1) to get faster lower or upper bound of the score.
      */
     public func solve(position: Position, weak: Bool = false) -> Int {
+        // check if win in one move as the Negamax function does not support this case.
+        // TODO : needed since Part9 - to be added.
+        if(position.canWinNext) {
+            return (Position.Dimension.area + 1 - position.numberOfMoves) / 2
+        }
+
         var min = weak ? -1 : -(Position.Dimension.area - position.numberOfMoves)/2
         var max = weak ?  1 :  (Position.Dimension.area + 1 - position.numberOfMoves)/2
 
@@ -242,5 +258,16 @@ public final class Solver {
         }
 
         return scores
+    }
+
+    // MARK: - OpeningBook
+
+    /// init solver with an opening book.
+    public convenience init(openingBook name: String) {
+        // call designated initializer
+        self.init()
+
+        // opening book
+        self.book = OpeningBook(width:Position.Dimension.width, height: Position.Dimension.height, openingBook: name)
     }
 }

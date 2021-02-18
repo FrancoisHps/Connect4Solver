@@ -72,31 +72,31 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "test-set 5"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "position 2252576253462244111563365343671351441"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "test-set 0 --weak"
+            argument = "position 427566236745127177115664464254"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "test-set 1 --weak"
+            argument = "position 4"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "test-set 2 --weak"
+            argument = "--weak"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "test-set 3 --weak"
+            argument = "explore 10"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "test-set 4 --weak"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "position 427566236745127177115664464254 --weak"
+            argument = "generate 2"
             isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>

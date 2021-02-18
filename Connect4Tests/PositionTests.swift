@@ -18,7 +18,7 @@
  */
 
 import XCTest
-import Connect4
+@testable import Connect4
 
 class PositionTests: XCTestCase {
 
@@ -99,5 +99,21 @@ class PositionTests: XCTestCase {
         position.play(in: 3)
 
         XCTAssertTrue(position.isWinnngMove(in: 2), "can't win in column \(2)")
+    }
+
+    func testSymetry() throws {
+        guard let position = position else { return }
+        guard let symetric = Position(moves: "6636312635426644777325523545217537447") else { return }
+
+        XCTAssertEqual(symetric.debugDescription,
+                        " . .X.O.O.O.X" + "\n" +
+                        " .X.X.X.O.X.O" + "\n" +
+                        " .O.O.X.O.O.X" + "\n" +
+                        " .X.X.O.X.O.X" + "\n" +
+                        "O.O.X.X.O.O.O" + "\n" +
+                        "O.X.X.X.O.X.X"
+        )
+
+        XCTAssertEqual(position.key3, symetric.key3)
     }
 }

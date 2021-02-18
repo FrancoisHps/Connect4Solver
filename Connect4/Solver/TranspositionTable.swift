@@ -31,7 +31,7 @@ final internal class TranspositionTable {
     private var keys : UnsafeMutablePointer<KeyType>
     private var values : UnsafeMutablePointer<ValueType>
     private static var size = 1 << 23 + 9
- 
+
     /**
      * Allocate and initialize to zero a mutable pointer.
      * We don't use UnsafeMutableBufferPointer because we don't need collection protocol
