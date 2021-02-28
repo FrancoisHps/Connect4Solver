@@ -32,7 +32,10 @@ public final class Solver {
     /// transposition table
     private var transpositionTable : TranspositionTable
 
-    /// opening book if any
+    /// create a move sorter pool which can contain a move sorter for at most Position.Dimension.area entries
+    private var moveSorterPool = MoveSorter.MoveSorterPool()
+
+        /// opening book if any
     internal var book: OpeningBook?
 
     /// define min and max score
@@ -145,7 +148,7 @@ public final class Solver {
         }
 
         // sort all possible moves
-        var moves = MoveSorter(at: position.numberOfMoves)
+        var moves = MoveSorter(at: position.numberOfMoves, using: moveSorterPool)
         for index in 0..<Position.Dimension.width {
             let move = next & Position.columnMask(for: columnOrder[index])
             if move != 0 {

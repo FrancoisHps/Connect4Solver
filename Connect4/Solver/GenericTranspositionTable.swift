@@ -19,7 +19,6 @@
 
 import Foundation
 
-
 internal protocol TranspositionTableProtocol {
 
     init(logSize: Int)
@@ -33,6 +32,8 @@ internal protocol TranspositionTableProtocol {
     var log2Size: Int { get }
 
     var data: Data { get }
+
+    var fillingRate: Double { get }
 }
 
 /**
@@ -143,5 +144,19 @@ final internal class GenericTranspositionTable<PartialKey: UnsignedInteger, Valu
         values.withMemoryRebound(to: UInt8.self, capacity: valueSize) { memory in
             valuesData.copyBytes(to: memory, count: valueSize * size)
         }
+    }
+}
+
+extension GenericTranspositionTable {
+    var fillingRate: Double {
+        var filling = 0
+
+        for index in 0..<size {
+            if (keys[index] != 0 && values[index] != 0) {
+                filling += 1
+            }
+        }
+
+        return Double(filling) / Double(size)
     }
 }

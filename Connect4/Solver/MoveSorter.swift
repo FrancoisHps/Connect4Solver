@@ -19,6 +19,7 @@
 
 import Foundation
 
+
 /**
  * This struct helps sorting the next moves
  *
@@ -33,14 +34,22 @@ import Foundation
 internal struct MoveSorter {
 
     /// Each entry contains a move and his score.
-    private typealias Entry = (move: UInt, score: Int)
+    fileprivate typealias Entry = (move: UInt, score: Int)
 
     /// create a move sorter pool which can contain a move sorter for at most Position.Dimension.area entries
-    static private var moveSorterPool : UnsafeMutablePointer<Entry> =  {
-        let size = Position.Dimension.area * Position.Dimension.width
-        let pool = UnsafeMutablePointer<Entry>.allocate(capacity: size)
-        return pool
-    }()
+//    static private var moveSorterPool : UnsafeMutablePointer<Entry> =  {
+//        let size = Position.Dimension.area * Position.Dimension.width
+//        let pool = UnsafeMutablePointer<Entry>.allocate(capacity: size)
+//        return pool
+//    }()
+
+    internal struct MoveSorterPool {
+        fileprivate var moveSorterPool : UnsafeMutablePointer<Entry> =  {
+            let size = Position.Dimension.area * Position.Dimension.width
+            let pool = UnsafeMutablePointer<Entry>.allocate(capacity: size)
+            return pool
+        }()
+    }
 
     /// Pointer to the appropriate container
     private var entries : UnsafeMutablePointer<Entry>
@@ -52,9 +61,9 @@ internal struct MoveSorter {
      * Initiate a moveSorter container
      * - parameter depth: depth in the search tree - Must be in [0..<Position.Dimension.area]
      */
-    internal init(at depth: Int) {
+    internal init(at depth: Int, using pool: MoveSorterPool) {
         assert(depth >= 0 && depth < Position.Dimension.area)
-        entries = Self.moveSorterPool.advanced(by: depth * Position.Dimension.width)
+        entries = pool.moveSorterPool.advanced(by: depth * Position.Dimension.width)
         count = 0
     }
 

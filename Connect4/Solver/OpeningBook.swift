@@ -18,6 +18,7 @@
  */
 
 import Foundation
+import Combine
 
 public class OpeningBook {
 
@@ -45,6 +46,15 @@ public class OpeningBook {
         let keySize: Int8
         let valueSize: Int8
         let logSize: Int8
+
+        init(width: Int, height: Int, depth: Int, keySize: Int, valueSize: Int, log2Size: Int) {
+            self.width = Int8(width)
+            self.height = Int8(height)
+            self.maxStoredPositionDepth = Int8(depth)
+            self.keySize = Int8(keySize)
+            self.valueSize = Int8(valueSize)
+            self.logSize = Int8(log2Size)
+        }
     }
 
     public init(width: Int, height: Int, depth: Int) {
@@ -71,6 +81,11 @@ public class OpeningBook {
         guard rawData.count >= MemoryLayout<OpenBookHeaderFormat>.size else {
             throw Self.OpeningBookError.missingHeaderData
         }
+
+//        let headerData: OpenBookHeaderFormat
+//        UnsafeMutablePointer(&headerData).withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<OpenBookHeaderFormat>.size) { memory in
+//            rawData.copyBytes(to: memory, count: MemoryLayout<OpenBookHeaderFormat>.size)
+//        }
 
         let width = Int(rawData[0])     // lire directement la structure....
         let height = Int(rawData[1])
@@ -109,16 +124,14 @@ public class OpeningBook {
     public func save(fileName: String) throws {
         let url = URL(fileURLWithPath: "./\(fileName).book")
 
-        var header = OpenBookHeaderFormat(
-            width: Int8(width),
-            height: Int8(height),
-            maxStoredPositionDepth: Int8(depth),
-            keySize: Int8(transpositionTable?.partialKeySize ?? 0),
-            valueSize: Int8(transpositionTable?.valueSize ?? 0),
-            logSize: Int8(transpositionTable?.log2Size ?? 0)
+        var header = OpenBookHeaderFormat(width: width,
+                                          height: height,
+                                          depth: depth,
+                                          keySize: transpositionTable?.partialKeySize ?? 0,
+                                          valueSize: transpositionTable?.valueSize ?? 0,
+                                          log2Size: transpositionTable?.log2Size ?? 0
         )
-
-        let headerData = Data(bytes: UnsafeRawPointer(&header),
+        let headerData = Data(bytes: &header,
                               count: MemoryLayout<OpenBookHeaderFormat>.size)
 
         guard let transpo = transpositionTable?.data else { throw OpeningBookError.missingData }
@@ -174,6 +187,10 @@ public class OpeningBook {
         // call the closure with position and key
         use(position, key)
 
+        if (visited.count % 10000000) == 0 {
+            print("\(Date()): \(visited.count)")
+        }
+
         // do not explore at further depth
         guard position.numberOfMoves < depth else { return }
 
@@ -227,5 +244,118 @@ public class OpeningBook {
         guard position.numberOfMoves <= depth else { return 0 }
 
         return transpositionTable?.get(key: position.key3) ?? 0
+    }
+}
+
+extension OpeningBook {
+    public func information() {
+        print("Width x Height: \(width) x \(height)")
+        print("Depth: \(depth)")
+
+        let keySize = transpositionTable?.partialKeySize ?? 0
+        let valueSize = transpositionTable?.valueSize ?? 0
+        let log2Size = transpositionTable?.log2Size ?? 0
+        print("Key and value size: \(keySize), \(valueSize)")
+        print("Transposition table log2 size : \(log2Size)")
+
+
+        let fillingRate = transpositionTable?.fillingRate ?? 0
+        print(String(format: "Filling rate :  %.2f%%", fillingRate * 100))
+    }
+
+    public func generate_parrallel(bookSize: Int) {
+        // calculer la taille de la key..... value toujours Int8
+        let keySize = Int(Double(depth + width - 1) * log2(3.0)) + 1 - bookSize
+
+        // a noter keySize en bits
+        // si <= 0 pas besoin de stocker la key (suffisamment d'entreés pour être distincts !)
+
+        switch keySize {
+            case ...8 :
+                self.transpositionTable = GenericTranspositionTable<UInt8, Int8>.init(logSize: bookSize)
+            case 9...16:
+                self.transpositionTable = GenericTranspositionTable<UInt16, Int8>.init(logSize: bookSize)
+            case 17...32:
+                self.transpositionTable = GenericTranspositionTable<UInt32, Int8>.init(logSize: bookSize)
+            default:
+                self.transpositionTable = nil // error.
+        }
+
+        // set up visited nodes to empty
+        var visited = Set<UInt>()
+        var positions = Array<Position>()
+        var key3s = Array<UInt>()
+
+        // Exploration
+        explore(position: Position(), visited: &visited) { position, key3 in
+            positions.append(position)
+            key3s.append(key3)
+        }
+
+        print("Generated entries : \(positions.count)")
+
+//        let solverQueue = DispatchQueue(label:"Solver", qos: .utility)
+        let group = DispatchGroup()
+        var scores = Array<Int>(repeating: .zero, count: positions.count)
+
+        // on découpe en autant de thraed que de cores
+        let threads = ProcessInfo().activeProcessorCount
+        let sliceSize = positions.count / threads + 1
+        for queue in 0..<threads {
+            let rangeMin = queue * sliceSize
+            let rangeMax = min (rangeMin + sliceSize, positions.count)
+
+            let solverQueue = DispatchQueue(label:"Solver \(queue)", qos: .utility)
+
+            group.enter()
+            solverQueue.async { [weak self] in
+                guard let self = self else {
+                    return
+                }
+
+                let range = rangeMin..<rangeMax
+                let slicedPosition = Array(positions[range])
+                let slicedKeys = Array(key3s[range])
+
+                let slicedScores = self.computeScore(positions: slicedPosition,
+                                                     keys: slicedKeys,
+                                                     queue: solverQueue)
+
+                scores.replaceSubrange(range, with: slicedScores)
+                group.leave()
+            }
+        }
+
+        group.wait()
+
+        print("\(Date()) Computing score completed. Now creating Transposition Table.")
+
+        // insert into transposition table
+        for index in 0..<key3s.count {
+            transpositionTable?.put(key: key3s[index],
+                                    value: scores[index] - Solver.Score.minScore + 1)
+        }
+    }
+
+    public func computeScore(positions: [Position], keys: [UInt], queue: DispatchQueue) -> [Int] {
+        // init Solver
+        let solver = Solver()
+
+        // init score
+        var scores = [Int]()
+
+        print("\(Date()) compute \(positions.count) positions on queue \(queue.label)")
+
+        for position in positions {
+            let score = solver.solve(position: position, weak: false)
+            scores.append(score)
+
+            if scores.count % 50000 == 0 {
+                print("\(Date()) computed \(scores.count) positions on queue \(queue.label)")
+            }
+        }
+        print("\(Date()) computed \(scores.count) positions on queue \(queue.label)")
+
+        return scores
     }
 }

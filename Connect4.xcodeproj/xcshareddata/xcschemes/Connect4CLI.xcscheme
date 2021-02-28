@@ -96,7 +96,15 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "generate 2"
+            argument = "generate 14 24"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "generate 4 16"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "book-information 7x6"
             isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>

@@ -38,7 +38,7 @@ print ("Finishing at \(Date())")
 struct Connect4Solver: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Connect4 solver.",
-        subcommands: [TestSet.self, Position.self, Explore.self, Generate.self])
+        subcommands: [TestSet.self, Position.self, Explore.self, Generate.self, BookInformation.self])
 }
 
 
@@ -165,14 +165,31 @@ extension Connect4Solver {
         @Argument(help: "Choose a depth")
         var depth: Int
 
+        @Argument(help: "Choose a book size")
+        var bookSize: Int
+
         func run() {
             let book = OpeningBook(width: 7, height: 6, depth: depth)
-            book.generate(bookSize: 24)
+//            book.generate(bookSize: bookSize) // S ingle
+            book.generate_parrallel(bookSize: bookSize) // M ulti
             do {
-                try book.save(fileName: "7x6_depth14")
+                try book.save(fileName: "7x6_D\(depth)_S\(bookSize)M16")
             }
             catch {
 
+            }
+        }
+    }
+}
+
+extension Connect4Solver {
+    struct BookInformation: ParsableCommand {
+        @Argument(help: "Choose a book")
+        var fileName: String
+
+        func run() {
+            if let book = OpeningBook(width: 7, height: 6, openingBook: fileName) {
+                book.information()
             }
         }
     }
