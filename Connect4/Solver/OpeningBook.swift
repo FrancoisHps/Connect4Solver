@@ -263,7 +263,7 @@ extension OpeningBook {
         print(String(format: "Filling rate :  %.2f%%", fillingRate * 100))
     }
 
-    public func generate_parrallel(bookSize: Int) {
+    public func generateLoadBalancing(bookSize: Int) {
         // calculer la taille de la key..... value toujours Int8
         let keySize = Int(Double(depth + width - 1) * log2(3.0)) + 1 - bookSize
 
@@ -294,68 +294,117 @@ extension OpeningBook {
 
         print("Generated entries : \(positions.count)")
 
-//        let solverQueue = DispatchQueue(label:"Solver", qos: .utility)
         let group = DispatchGroup()
-        var scores = Array<Int>(repeating: .zero, count: positions.count)
 
         // on découpe en autant de thraed que de cores
         let threads = ProcessInfo().activeProcessorCount
-        let sliceSize = positions.count / threads + 1
-        for queue in 0..<threads {
-            let rangeMin = queue * sliceSize
-            let rangeMax = min (rangeMin + sliceSize, positions.count)
 
+        // unité de traitement
+        let unit = LoadBalancer(positions: positions)
+
+        // on lance le traitement sur chaque core
+        for queue in 0..<threads {
+
+            // init Solver
             let solverQueue = DispatchQueue(label:"Solver \(queue)", qos: .utility)
 
             group.enter()
-            solverQueue.async { [weak self] in
-                guard let self = self else {
-                    return
-                }
-
-                let range = rangeMin..<rangeMax
-                let slicedPosition = Array(positions[range])
-                let slicedKeys = Array(key3s[range])
-
-                let slicedScores = self.computeScore(positions: slicedPosition,
-                                                     keys: slicedKeys,
-                                                     queue: solverQueue)
-
-                scores.replaceSubrange(range, with: slicedScores)
+            solverQueue.async {
+                self.computeScore(processing: unit,
+                                  queue: solverQueue)
                 group.leave()
             }
         }
 
         group.wait()
 
-        print("\(Date()) Computing score completed. Now creating Transposition Table.")
+        print("\(Date()) Creating Transposition Table.")
 
         // insert into transposition table
         for index in 0..<key3s.count {
             transpositionTable?.put(key: key3s[index],
-                                    value: scores[index] - Solver.Score.minScore + 1)
+                                    value: unit.scores[index] - Solver.Score.minScore + 1)
         }
     }
 
-    public func computeScore(positions: [Position], keys: [UInt], queue: DispatchQueue) -> [Int] {
+    internal func computeScore(processing unit: LoadBalancer, queue: DispatchQueue) {
         // init Solver
         let solver = Solver()
 
-        // init score
-        var scores = [Int]()
+        while let task = unit.next() {
 
-        print("\(Date()) compute \(positions.count) positions on queue \(queue.label)")
+            // init score
+            var scores = [Int]()
 
-        for position in positions {
-            let score = solver.solve(position: position, weak: false)
-            scores.append(score)
-
-            if scores.count % 50000 == 0 {
-                print("\(Date()) computed \(scores.count) positions on queue \(queue.label)")
+            for position in task.positions {
+                let score = solver.solve(position: position, weak: false)
+                scores.append(score)
             }
-        }
-        print("\(Date()) computed \(scores.count) positions on queue \(queue.label)")
 
-        return scores
+            unit.setResult(task: task, value: scores)
+
+            print("\(Date()) computed \(scores.count) positions on queue \(queue.label)")
+        }
     }
+}
+
+internal class LoadBalancer {
+    let positions: Array<Position>
+    var scores: Array<Int>
+
+    private let batchSize : Int
+    private var nextBatchIndex: Int = 0
+    private var semaphore = DispatchSemaphore(value: 1)
+
+    init(positions: Array<Position>) {
+        self.positions = positions
+        self.scores = Array<Int>(repeating: .zero, count: positions.count)
+        self.batchSize = clamp(positions.count / ProcessInfo().activeProcessorCount / 100,
+                               minValue: 1,
+                               maxValue: 50000)
+
+        print("batch size is \(batchSize)")
+    }
+
+    func next() -> Task? {
+        // Wait semaphore is accessible
+        semaphore.wait()
+        defer {
+            semaphore.signal()
+        }
+
+        // if index reaches end of positions : no more task.
+        guard nextBatchIndex < positions.count else { return nil }
+
+        // compute range
+        let rangeMin = nextBatchIndex
+        let rangeMax = min (nextBatchIndex + batchSize, positions.count)
+        let range = rangeMin..<rangeMax
+
+        // set next batch index value
+        nextBatchIndex = rangeMax
+
+        return Task(range: range, positions: positions)
+    }
+
+    func setResult(task: Task, value: [Int]) {
+        precondition(task.range.count == value.count, "scores doesn't fit in range")
+        semaphore.wait()
+        scores.replaceSubrange(task.range, with: value)
+        semaphore.signal()
+    }
+}
+
+internal struct Task {
+    let range: Range<Int>
+    let positions: [Position]
+
+    init(range: Range<Int>, positions: [Position]) {
+        self.range = range
+        self.positions = Array(positions[range])
+    }
+}
+
+public func clamp<T>(_ value: T, minValue: T, maxValue: T) -> T where T : Comparable {
+    return min(max(value, minValue), maxValue)
 }

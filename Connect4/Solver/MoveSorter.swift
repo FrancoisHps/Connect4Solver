@@ -43,6 +43,7 @@ internal struct MoveSorter {
 //        return pool
 //    }()
 
+    // TODO : FAIRE SOUS FORME DE CLASSE ET DEINIT
     internal struct MoveSorterPool {
         fileprivate var moveSorterPool : UnsafeMutablePointer<Entry> =  {
             let size = Position.Dimension.area * Position.Dimension.width

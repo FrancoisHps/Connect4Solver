@@ -171,9 +171,9 @@ extension Connect4Solver {
         func run() {
             let book = OpeningBook(width: 7, height: 6, depth: depth)
 //            book.generate(bookSize: bookSize) // S ingle
-            book.generate_parrallel(bookSize: bookSize) // M ulti
+            book.generateLoadBalancing(bookSize: bookSize) // L oad balancing
             do {
-                try book.save(fileName: "7x6_D\(depth)_S\(bookSize)M16")
+                try book.save(fileName: "7x6_D\(depth)_S\(bookSize)L4")
             }
             catch {
 
