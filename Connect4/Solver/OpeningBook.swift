@@ -259,8 +259,9 @@ extension OpeningBook {
         print("Transposition table log2 size : \(log2Size)")
 
 
+        let filling = transpositionTable?.filling ?? 0
         let fillingRate = transpositionTable?.fillingRate ?? 0
-        print(String(format: "Filling rate :  %.2f%%", fillingRate * 100))
+        print(String(format: "Filling : %d, rate :  %.2f%%", filling, fillingRate * 100))
     }
 
     public func generateLoadBalancing(bookSize: Int) {
@@ -281,26 +282,17 @@ extension OpeningBook {
                 self.transpositionTable = nil // error.
         }
 
-        // set up visited nodes to empty
-        var visited = Set<UInt>()
-        var positions = Array<Position>()
-        var key3s = Array<UInt>()
-
-        // Exploration
-        explore(position: Position(), visited: &visited) { position, key3 in
-            positions.append(position)
-            key3s.append(key3)
-        }
-
-        print("Generated entries : \(positions.count)")
-
-        let group = DispatchGroup()
+        // Generate positions to be evaluated
+        let (positions, key3s) = generateSortedPositions()
 
         // on découpe en autant de thraed que de cores
         let threads = ProcessInfo().activeProcessorCount
 
         // unité de traitement
-        let unit = LoadBalancer(positions: positions)
+        let loadBalancer = LoadBalancer(positions: positions)
+
+        // group to synchronize all queues
+        let group = DispatchGroup()
 
         // on lance le traitement sur chaque core
         for queue in 0..<threads {
@@ -310,7 +302,7 @@ extension OpeningBook {
 
             group.enter()
             solverQueue.async {
-                self.computeScore(processing: unit,
+                self.computeScore(processing: loadBalancer,
                                   queue: solverQueue)
                 group.leave()
             }
@@ -323,9 +315,156 @@ extension OpeningBook {
         // insert into transposition table
         for index in 0..<key3s.count {
             transpositionTable?.put(key: key3s[index],
-                                    value: unit.scores[index] - Solver.Score.minScore + 1)
+                                    value: loadBalancer.scores[index] - Solver.Score.minScore + 1)
         }
     }
+
+    private func generateSortedPositions() -> (Array<Position>, Array<UInt>) {
+
+        struct Entry: Equatable {
+            var position: Position
+            var key3: UInt
+            var hash: Int
+        }
+
+        // set up visited nodes to empty
+        var visited = Set<UInt>()
+        var entries = Array<Entry>()
+        let size = (1 << (transpositionTable?.log2Size ?? 0)).nextPrime // tordu ;-)
+
+        // Exploration
+        explore(position: Position(), visited: &visited) { position, key3 in
+            entries.append(
+                Entry(position: position,
+                      key3: key3,
+                      hash: Int(bitPattern: key3) % size
+                )
+            )
+        }
+
+        print("Generated entries : \(entries.count)")
+
+        // We keep only earliest position with the same hash, and ordered by hash
+        var used = Set<(Int)>()
+        let filtered = entries.sorted(by:) {
+            // Early position game first (sort by numberOfMoves ascendent)
+            $0.position.numberOfMoves < $1.position.numberOfMoves
+        }.filter { (entry) -> Bool in
+            guard !used.contains(entry.hash) else { return false }
+
+            // we only store the earliest position with the same hash
+            used.insert(entry.hash)
+            return true
+        }.sorted(by: ) {
+            $0.hash < $1.hash
+        }
+
+        print("Filtered entries : \(filtered.count)")
+
+        // create positions and key3s arrays with the same capacity as filtered array
+        var positions = [Position]()
+        positions.reserveCapacity(filtered.count)
+        var key3s = [UInt]()
+        key3s.reserveCapacity(filtered.count)
+
+        // Create filtered positions array in original ordering
+        for entry in entries {
+            var low = filtered.startIndex
+            var high = filtered.endIndex
+            while low != high {
+                let mid = low + (high - low) / 2
+
+//                guard filtered[mid] != entry else {
+//                    positions.append(entry.position)
+//                    key3s.append(entry.key3)
+//                    break
+//                }
+
+                if (filtered[mid].hash < entry.hash) {
+                    low = mid + 1
+                }
+                else {
+                    high = mid
+                }
+            }
+
+            if filtered[low] == entry {
+                positions.append(entry.position)
+                key3s.append(entry.key3)
+            }
+        }
+
+        assert(positions.count == key3s.count)
+        assert(positions.count == filtered.count)
+
+        print("positions & key3 : \(positions.count), \(key3s.count)")
+
+        return (positions, key3s)
+    }
+
+//    public func generateLoadBalancing(bookSize: Int) {
+//        // calculer la taille de la key..... value toujours Int8
+//        let keySize = Int(Double(depth + width - 1) * log2(3.0)) + 1 - bookSize
+//
+//        // a noter keySize en bits
+//        // si <= 0 pas besoin de stocker la key (suffisamment d'entreés pour être distincts !)
+//
+//        switch keySize {
+//            case ...8 :
+//                self.transpositionTable = GenericTranspositionTable<UInt8, Int8>.init(logSize: bookSize)
+//            case 9...16:
+//                self.transpositionTable = GenericTranspositionTable<UInt16, Int8>.init(logSize: bookSize)
+//            case 17...32:
+//                self.transpositionTable = GenericTranspositionTable<UInt32, Int8>.init(logSize: bookSize)
+//            default:
+//                self.transpositionTable = nil // error.
+//        }
+//
+//        // set up visited nodes to empty
+//        var visited = Set<UInt>()
+//        var positions = Array<Position>()
+//        var key3s = Array<UInt>()
+//
+//        // Exploration
+//        explore(position: Position(), visited: &visited) { position, key3 in
+//            positions.append(position)
+//            key3s.append(key3)
+//        }
+//
+//        print("Generated entries : \(positions.count)")
+//
+//        let group = DispatchGroup()
+//
+//        // on découpe en autant de thraed que de cores
+//        let threads = ProcessInfo().activeProcessorCount
+//
+//        // unité de traitement
+//        let loadBalancer = LoadBalancer(positions: positions)
+//
+//        // on lance le traitement sur chaque core
+//        for queue in 0..<threads {
+//
+//            // init Solver
+//            let solverQueue = DispatchQueue(label:"Solver \(queue)", qos: .utility)
+//
+//            group.enter()
+//            solverQueue.async {
+//                self.computeScore(processing: loadBalancer,
+//                                  queue: solverQueue)
+//                group.leave()
+//            }
+//        }
+//
+//        group.wait()
+//
+//        print("\(Date()) Creating Transposition Table.")
+//
+//        // insert into transposition table
+//        for index in 0..<key3s.count {
+//            transpositionTable?.put(key: key3s[index],
+//                                    value: loadBalancer.scores[index] - Solver.Score.minScore + 1)
+//        }
+//    }
 
     internal func computeScore(processing unit: LoadBalancer, queue: DispatchQueue) {
         // init Solver
@@ -408,3 +547,4 @@ internal struct Task {
 public func clamp<T>(_ value: T, minValue: T, maxValue: T) -> T where T : Comparable {
     return min(max(value, minValue), maxValue)
 }
+

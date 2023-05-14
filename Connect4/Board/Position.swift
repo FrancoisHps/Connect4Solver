@@ -408,3 +408,4 @@ extension Position : CustomDebugStringConvertible  {
     }
 }
 
+extension Position: Equatable {}

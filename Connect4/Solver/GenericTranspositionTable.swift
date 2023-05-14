@@ -33,6 +33,7 @@ internal protocol TranspositionTableProtocol {
 
     var data: Data { get }
 
+    var filling: Int { get }
     var fillingRate: Double { get }
 }
 
@@ -148,7 +149,7 @@ final internal class GenericTranspositionTable<PartialKey: UnsignedInteger, Valu
 }
 
 extension GenericTranspositionTable {
-    var fillingRate: Double {
+    var filling: Int {
         var filling = 0
 
         for index in 0..<size {
@@ -157,6 +158,10 @@ extension GenericTranspositionTable {
             }
         }
 
+        return filling
+    }
+
+    var fillingRate: Double {
         return Double(filling) / Double(size)
     }
 }

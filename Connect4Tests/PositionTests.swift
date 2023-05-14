@@ -29,6 +29,17 @@ class PositionTests: XCTestCase {
         position = Position(moves: moves)
     }
 
+    // use this new function instead + remove "guard let position = ..."
+    // s'inspirer de l'évolution des tests dans SwiftUIFourInARow (winnig horizontal, vertical et diagonal)
+//    override func setUpWithError() throws {
+//        guard let parsedPosition = Position(moves: moves) else {
+//            XCTFail("can't parse moves \(moves)")
+//            return
+//        }
+//
+//        position = parsedPosition
+//    }
+
     func testInit() throws {
         let position = Position()
         XCTAssertEqual(position.numberOfMoves, 0)
@@ -85,7 +96,7 @@ class PositionTests: XCTestCase {
         position.play(in: 6)
         position.play(in: 6)
 
-        XCTAssertTrue(position.isWinnngMove(in: 6), "can't win in column \(5)")
+        XCTAssertTrue(position.isWinnngMove(in: 6), "can't win in column \(6)")
     }
 
     func testWinningVerticalMove() throws {

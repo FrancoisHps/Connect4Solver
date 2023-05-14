@@ -115,7 +115,7 @@ extension Connect4Solver {
 
         func solve(testSet index: Int)  {
 
-            let solver = Solver(openingBook: "7x6")
+            let solver = Solver(openingBook: "7x6_D14_S24O16")
             let testSet = BenchmarkDataSet(index: index)
 
             var totalDuration = 0.0
@@ -171,9 +171,9 @@ extension Connect4Solver {
         func run() {
             let book = OpeningBook(width: 7, height: 6, depth: depth)
 //            book.generate(bookSize: bookSize) // S ingle
-            book.generateLoadBalancing(bookSize: bookSize) // L oad balancing
+            book.generateLoadBalancing(bookSize: bookSize) // L oad balancing O ptimized
             do {
-                try book.save(fileName: "7x6_D\(depth)_S\(bookSize)L4")
+                try book.save(fileName: "7x6_D\(depth)_S\(bookSize)O16")
             }
             catch {
 
